@@ -1,0 +1,91 @@
+package com.notloc.targettruetile;
+
+import java.awt.*;
+import javax.inject.Inject;
+
+import net.runelite.api.*;
+import net.runelite.client.ui.overlay.Overlay;
+import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.ui.overlay.OverlayPosition;
+
+import net.runelite.api.Client;
+import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.client.ui.overlay.*;
+
+import java.util.Collection;
+import java.util.Set;
+
+class TargetTrueTileOverlay extends Overlay {
+    private final Client client;
+    private final TargetTrueTilePlugin plugin;
+    private final TargetTrueTileConfig config;
+
+    @Inject
+    private TargetTrueTileOverlay(Client client, TargetTrueTilePlugin plugin, TargetTrueTileConfig config) {
+        this.client = client;
+        this.plugin = plugin;
+        this.config = config;
+        setPosition(OverlayPosition.DYNAMIC);
+        setLayer(OverlayLayer.ABOVE_SCENE);
+        setPriority(PRIORITY_HIGH);
+    }
+
+    @Override
+    public Dimension render(Graphics2D graphics) {
+        Set<NPC> npcs = plugin.getTargetMemory().getNpcs();
+        renderTrueTiles(graphics, npcs);
+
+        if (config.highlightOnHover()) {
+            NPC mousedNpc = plugin.findNpcUnderMouse();
+            if (mousedNpc != null && !npcs.contains(mousedNpc)) {
+                renderTrueTile(graphics, mousedNpc);
+            }
+        }
+
+        for (NPC npc : plugin.getTaggedNpcs()) {
+            if (!npcs.contains(npc)) {
+                renderTrueTile(graphics, npc);
+            }
+        }
+
+        return null;
+    }
+
+    private void renderTrueTile(Graphics2D graphics, NPC npc) {
+        renderTrueTileForNpc(graphics, npc, config.tileColor(), config.tileFillColor(), config.tileCornerColor(), config.tileCornerLength(), config.borderSize());
+    }
+
+    private void renderTrueTiles(Graphics2D graphics, Collection<NPC> npcs) {
+        for (NPC npc : npcs) {
+            renderTrueTileForNpc(graphics, npc, config.tileColor(), config.tileFillColor(), config.tileCornerColor(), config.tileCornerLength(), config.borderSize());
+        }
+    }
+
+    private void renderTrueTileForNpc(Graphics2D graphics, NPC npc, Color color, Color innerColor, Color cornerColor, int cornerLength, int borderSize) {
+        if (npc.getComposition() == null) {
+            return;
+        }
+
+        WorldPoint target = npc.getWorldLocation();
+        LocalPoint point = LocalPoint.fromWorld(client, target);
+        if (point == null) {
+            return;
+        }
+
+        int size = npc.getComposition().getSize();
+
+        // 128 units per square, offset position to align larger enemies
+        LocalPoint renderPoint = new LocalPoint(point.getX() + 128*size/2 - 64, point.getY() + 128*size/2 - 64);
+        Polygon poly;
+
+        if (config.showCorner() && (!config.showCornerOnlyLarge() || size > 1)) {
+            // Marks the SW corner of the tile
+            poly = PerspectiveUtil.getCanvasTileMarkPoly(client, renderPoint, size, cornerLength * size);
+            OverlayUtil.renderPolygon(graphics, poly, cornerColor, cornerColor, new BasicStroke(borderSize));
+        }
+
+        poly = Perspective.getCanvasTileAreaPoly(client, renderPoint, size);
+        OverlayUtil.renderPolygon(graphics, poly, color, innerColor, new BasicStroke(borderSize));
+    }
+}
