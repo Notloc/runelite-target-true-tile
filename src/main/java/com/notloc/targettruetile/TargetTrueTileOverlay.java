@@ -110,11 +110,15 @@ class TargetTrueTileOverlay extends Overlay {
         if (config.showCorner() && (!config.showCornerOnlyLarge() || size > 1)) {
             // Marks the SW corner of the tile
             poly = PerspectiveUtil.getCanvasTileMarkPoly(client, renderPoint, size, cornerLength * size);
-            OverlayUtil.renderPolygon(graphics, poly, cornerColor, cornerColor, new BasicStroke(borderSize));
+            if (poly != null) {
+                OverlayUtil.renderPolygon(graphics, poly, cornerColor, cornerColor, new BasicStroke(borderSize));
+            }
         }
 
         poly = Perspective.getCanvasTileAreaPoly(client, renderPoint, size);
-        OverlayUtil.renderPolygon(graphics, poly, color, innerColor, new BasicStroke(borderSize));
+        if (poly != null) {
+            OverlayUtil.renderPolygon(graphics, poly, color, innerColor, new BasicStroke(borderSize));
+        }
 
         return poly;
     }

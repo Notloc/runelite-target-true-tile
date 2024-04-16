@@ -103,7 +103,6 @@ public class ImprovedTileIndicatorsUtil {
         graphics.setComposite(AlphaComposite.Clear);
         graphics.setColor(Color.WHITE);
 
-
         PolygonBuilder polyBuilder = new PolygonBuilder();
 
         for (int i = 0; i < tCount; i++) {
@@ -127,7 +126,6 @@ public class ImprovedTileIndicatorsUtil {
                 );
             }
         }
-
         List<Polygon> renderedPolygons = new ArrayList<>();
         for (Polygon polygon : polyBuilder.getPolygons()) {
             boolean render = true;
@@ -139,7 +137,7 @@ public class ImprovedTileIndicatorsUtil {
             }
 
             if (!render) {
-                continue;
+                //continue;
             }
 
             graphics.fill(polygon);
@@ -168,14 +166,11 @@ public class ImprovedTileIndicatorsUtil {
         int top = Math.min(Math.min(y1, y2), y3);
         int bottom = Math.max(Math.max(y1, y2), y3);
 
-        // Filter polys are assumed to have 4 points
         for (Polygon p : filter) {
-            int polyLeft = Math.min(Math.min(Math.min(p.xpoints[0], p.xpoints[1]), p.xpoints[2]), p.xpoints[3]);
-            int polyRight = Math.max(Math.max(Math.max(p.xpoints[0], p.xpoints[1]), p.xpoints[2]), p.xpoints[3]);
-            int polyTop = Math.min(Math.min(Math.min(p.ypoints[0], p.ypoints[1]), p.ypoints[2]), p.ypoints[3]);
-            int polyBottom = Math.max(Math.max(Math.max(p.ypoints[0], p.ypoints[1]), p.ypoints[2]), p.ypoints[3]);
-
-            if (left < polyRight && right > polyLeft && top < polyBottom && bottom > polyTop) {
+            if (p.contains(x1, y1) || p.contains(x2, y2) || p.contains(x3, y3)) {
+                return true;
+            }
+            if (p.intersects(left, top, right - left, bottom - top)) {
                 return true;
             }
         }
