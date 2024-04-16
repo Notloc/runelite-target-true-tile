@@ -63,12 +63,15 @@ class TargetTrueTileOverlay extends Overlay {
             }
         }
 
+        long nano = System.nanoTime();
         if (client.isGpu() && config.improvedTileRendering()) {
             for (NPC npc : renderList) {
                 ImprovedTileIndicatorsUtil.removeActorFast(client, graphics, npc, renderPolyList);
             }
             ImprovedTileIndicatorsUtil.removeActorFast(client, graphics, client.getLocalPlayer(), renderPolyList);
         }
+        long elapsed = System.nanoTime() - nano;
+        System.out.println("Time ms: " + elapsed / 1000000f);
 
         renderList.clear();
         renderPolyList.clear();

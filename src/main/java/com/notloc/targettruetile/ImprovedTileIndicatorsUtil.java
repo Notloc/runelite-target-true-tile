@@ -126,24 +126,10 @@ public class ImprovedTileIndicatorsUtil {
                 );
             }
         }
-        List<Polygon> renderedPolygons = new ArrayList<>();
+
         for (Polygon polygon : polyBuilder.getPolygons()) {
-            boolean render = true;
-            for (Polygon renderedPolygon : renderedPolygons) {
-                if (renderedPolygon.getBounds().contains(polygon.getBounds())) {
-                    render = false;
-                    break;
-                }
-            }
-
-            if (!render) {
-                //continue;
-            }
-
             graphics.fill(polygon);
-            renderedPolygons.add(polygon);
         }
-
 
         graphics.setComposite(orig);
         graphics.setRenderingHint(
