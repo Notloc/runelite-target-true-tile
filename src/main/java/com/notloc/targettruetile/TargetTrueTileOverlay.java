@@ -24,6 +24,7 @@ class TargetTrueTileOverlay extends Overlay {
     private final TargetTrueTileConfig config;
 
     private final List<NPC> renderList = new ArrayList<>();
+    private final List<Polygon> renderPolyList = new ArrayList<>();
 
     @Inject
     private TargetTrueTileOverlay(Client client, TargetTrueTilePlugin plugin, TargetTrueTileConfig config) {
@@ -38,54 +39,66 @@ class TargetTrueTileOverlay extends Overlay {
     @Override
     public Dimension render(Graphics2D graphics) {
         Set<NPC> npcs = plugin.getTargetMemory().getNpcs();
-        renderTrueTiles(graphics, npcs);
+        renderPolyList.addAll(renderTrueTiles(graphics, npcs));
         renderList.addAll(npcs);
 
         if (config.highlightOnHover()) {
             NPC mousedNpc = plugin.findNpcUnderMouse();
             if (mousedNpc != null && !npcs.contains(mousedNpc)) {
-                renderTrueTile(graphics, mousedNpc);
-                renderList.add(mousedNpc);
+                Polygon p = renderTrueTile(graphics, mousedNpc);
+                if (p != null) {
+                    renderList.add(mousedNpc);
+                    renderPolyList.add(p);
+                }
             }
         }
 
         for (NPC npc : plugin.getTaggedNpcs()) {
             if (!npcs.contains(npc)) {
-                renderTrueTile(graphics, npc);
-                renderList.add(npc);
+                Polygon p = renderTrueTile(graphics, npc);
+                if (p != null) {
+                    renderList.add(npc);
+                    renderPolyList.add(p);
+                }
             }
         }
 
         if (client.isGpu() && config.improvedTileRendering()) {
             for (NPC npc : renderList) {
-                ImprovedTileIndicatorsUtil.removeActor(client, graphics, npc);
+                ImprovedTileIndicatorsUtil.removeActorFast(client, graphics, npc, renderPolyList);
             }
-            ImprovedTileIndicatorsUtil.removeActor(client, graphics, client.getLocalPlayer());
+            ImprovedTileIndicatorsUtil.removeActorFast(client, graphics, client.getLocalPlayer(), renderPolyList);
         }
 
         renderList.clear();
+        renderPolyList.clear();
         return null;
     }
 
-    private void renderTrueTile(Graphics2D graphics, NPC npc) {
-        renderTrueTileForNpc(graphics, npc, config.tileColor(), config.tileFillColor(), config.tileCornerColor(), config.tileCornerLength(), config.borderSize());
+    private Polygon renderTrueTile(Graphics2D graphics, NPC npc) {
+        return renderTrueTileForNpc(graphics, npc, config.tileColor(), config.tileFillColor(), config.tileCornerColor(), config.tileCornerLength(), config.borderSize());
     }
 
-    private void renderTrueTiles(Graphics2D graphics, Collection<NPC> npcs) {
+    private List<Polygon> renderTrueTiles(Graphics2D graphics, Collection<NPC> npcs) {
+        List<Polygon> polygons = new ArrayList<>();
         for (NPC npc : npcs) {
-            renderTrueTileForNpc(graphics, npc, config.tileColor(), config.tileFillColor(), config.tileCornerColor(), config.tileCornerLength(), config.borderSize());
+            Polygon polygon = renderTrueTileForNpc(graphics, npc, config.tileColor(), config.tileFillColor(), config.tileCornerColor(), config.tileCornerLength(), config.borderSize());
+            if (polygon != null) {
+                polygons.add(polygon);
+            }
         }
+        return polygons;
     }
 
-    private void renderTrueTileForNpc(Graphics2D graphics, NPC npc, Color color, Color innerColor, Color cornerColor, int cornerLength, int borderSize) {
+    private Polygon renderTrueTileForNpc(Graphics2D graphics, NPC npc, Color color, Color innerColor, Color cornerColor, int cornerLength, int borderSize) {
         if (npc.getComposition() == null) {
-            return;
+            return null;
         }
 
         WorldPoint target = npc.getWorldLocation();
         LocalPoint point = LocalPoint.fromWorld(client, target);
         if (point == null) {
-            return;
+            return null;
         }
 
         int size = npc.getComposition().getSize();
@@ -102,5 +115,7 @@ class TargetTrueTileOverlay extends Overlay {
 
         poly = Perspective.getCanvasTileAreaPoly(client, renderPoint, size);
         OverlayUtil.renderPolygon(graphics, poly, color, innerColor, new BasicStroke(borderSize));
+
+        return poly;
     }
 }

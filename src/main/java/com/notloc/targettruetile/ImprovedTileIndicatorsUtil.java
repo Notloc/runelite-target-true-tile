@@ -26,6 +26,9 @@
 package com.notloc.targettruetile;
 
 import java.awt.*;
+import java.awt.geom.Line2D;
+import java.util.*;
+import java.util.List;
 
 import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
@@ -35,7 +38,8 @@ import net.runelite.api.coords.LocalPoint;
 
 // Allows us to display tile indicators beneath actors
 public class ImprovedTileIndicatorsUtil {
-    public static void removeActor(final Client client, final Graphics2D graphics, final Actor actor) {
+
+    public static void removeActorFast(final Client client, final Graphics2D graphics, final Actor actor, final List<Polygon> filter) {
         final int clipX1 = client.getViewportXOffset();
         final int clipY1 = client.getViewportYOffset();
         final int clipX2 = client.getViewportWidth() + clipX1;
@@ -98,20 +102,51 @@ public class ImprovedTileIndicatorsUtil {
         Composite orig = graphics.getComposite();
         graphics.setComposite(AlphaComposite.Clear);
         graphics.setColor(Color.WHITE);
+
+
+        PolygonBuilder polyBuilder = new PolygonBuilder();
+
         for (int i = 0; i < tCount; i++) {
             // Cull tris facing away from the camera
             if (getTriDirection(x2d[tx[i]], y2d[tx[i]], x2d[ty[i]], y2d[ty[i]], x2d[tz[i]], y2d[tz[i]]) >= 0)
             {
                 continue;
             }
+
+            // Cull tris that are not in the filter
+            if (!isTriInsideFilter(x2d[tx[i]], y2d[tx[i]], x2d[ty[i]], y2d[ty[i]], x2d[tz[i]], y2d[tz[i]], filter))
+            {
+                continue;
+            }
+
             if (triangleTransparencies == null || (triangleTransparencies[i] & 255) < 254) {
-                Polygon p = new Polygon(
-                        new int[]{x2d[tx[i]], x2d[ty[i]], x2d[tz[i]]},
-                        new int[]{y2d[tx[i]], y2d[ty[i]], y2d[tz[i]]},
-                        3);
-                graphics.fill(p);
+                polyBuilder.addTriangle(
+                        x2d[tx[i]], y2d[tx[i]],
+                        x2d[ty[i]], y2d[ty[i]],
+                        x2d[tz[i]], y2d[tz[i]]
+                );
             }
         }
+
+        List<Polygon> renderedPolygons = new ArrayList<>();
+        for (Polygon polygon : polyBuilder.getPolygons()) {
+            boolean render = true;
+            for (Polygon renderedPolygon : renderedPolygons) {
+                if (renderedPolygon.getBounds().contains(polygon.getBounds())) {
+                    render = false;
+                    break;
+                }
+            }
+
+            if (!render) {
+                continue;
+            }
+
+            graphics.fill(polygon);
+            renderedPolygons.add(polygon);
+        }
+
+
         graphics.setComposite(orig);
         graphics.setRenderingHint(
                 RenderingHints.KEY_ANTIALIASING,
@@ -124,5 +159,138 @@ public class ImprovedTileIndicatorsUtil {
         int x5 = x3 - x1;
         int y5 = y3 - y1;
         return x4 * y5 - y4 * x5;
+    }
+
+    private static boolean isTriInsideFilter(int x1, int y1, int x2, int y2, int x3, int y3, List<Polygon> filter) {
+        // Inaccurate but fast check if any of the points are inside the filter
+        int left = Math.min(Math.min(x1, x2), x3);
+        int right = Math.max(Math.max(x1, x2), x3);
+        int top = Math.min(Math.min(y1, y2), y3);
+        int bottom = Math.max(Math.max(y1, y2), y3);
+
+        // Filter polys are assumed to have 4 points
+        for (Polygon p : filter) {
+            int polyLeft = Math.min(Math.min(Math.min(p.xpoints[0], p.xpoints[1]), p.xpoints[2]), p.xpoints[3]);
+            int polyRight = Math.max(Math.max(Math.max(p.xpoints[0], p.xpoints[1]), p.xpoints[2]), p.xpoints[3]);
+            int polyTop = Math.min(Math.min(Math.min(p.ypoints[0], p.ypoints[1]), p.ypoints[2]), p.ypoints[3]);
+            int polyBottom = Math.max(Math.max(Math.max(p.ypoints[0], p.ypoints[1]), p.ypoints[2]), p.ypoints[3]);
+
+            if (left < polyRight && right > polyLeft && top < polyBottom && bottom > polyTop) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static class PolygonBuilder {
+        private final List<PolygonPrototype> polygons = new ArrayList<>();
+        private final Map<Edge, PolygonPrototype> polygonsByEdge = new HashMap<>();
+
+        public void addTriangle(int x1, int y1, int x2, int y2, int x3, int y3) {
+            Edge e1 = new Edge(x1, y1, x2, y2);
+            Edge e2 = new Edge(x2, y2, x3, y3);
+            Edge e3 = new Edge(x3, y3, x1, y1);
+
+            if (polygonsByEdge.containsKey(e1)) {
+                PolygonPrototype p = polygonsByEdge.get(e1);
+                p.insertEdgesAt(e1, e2, e3);
+                polygonsByEdge.remove(e1);
+                polygonsByEdge.put(e2, p);
+                polygonsByEdge.put(e3, p);
+            } else if (polygonsByEdge.containsKey(e2)) {
+                PolygonPrototype p = polygonsByEdge.get(e2);
+                p.insertEdgesAt(e2, e3, e1);
+                polygonsByEdge.remove(e2);
+                polygonsByEdge.put(e1, p);
+                polygonsByEdge.put(e3, p);
+            } else if (polygonsByEdge.containsKey(e3)) {
+                PolygonPrototype p = polygonsByEdge.get(e3);
+                p.insertEdgesAt(e3, e1, e2);
+                polygonsByEdge.remove(e3);
+                polygonsByEdge.put(e1, p);
+                polygonsByEdge.put(e2, p);
+            } else {
+                PolygonPrototype p = new PolygonPrototype(e1, e2, e3);
+                polygonsByEdge.put(e1, p);
+                polygonsByEdge.put(e2, p);
+                polygonsByEdge.put(e3, p);
+                polygons.add(p);
+            }
+        }
+
+        public List<Polygon> getPolygons() {
+            List<Polygon> result = new ArrayList<>();
+            for (PolygonPrototype p : polygons) {
+                result.add(p.toPolygon());
+            }
+            return result;
+        }
+    }
+
+    private static class PolygonPrototype {
+        LinkedList<Edge> edges = new LinkedList<>();
+
+        public PolygonPrototype(Edge... edges) {
+            for (Edge e : edges) {
+                this.edges.add(e);
+            }
+        }
+
+        public void insertEdgesAt(Edge edgeToReplace, Edge... newEdges) {
+            int index = edges.indexOf(edgeToReplace);
+            if (index == -1) {
+                return;
+            }
+
+            edges.set(index, newEdges[0]);
+            for (int i = 1; i < newEdges.length; i++) {
+                edges.add(index + i, newEdges[i]);
+            }
+        }
+
+        public Polygon toPolygon() {
+            int[] x = new int[edges.size()];
+            int[] y = new int[edges.size()];
+
+            for (int i = 0; i < edges.size(); i++) {
+                x[i] = edges.get(i).x1;
+                y[i] = edges.get(i).y1;
+            }
+
+            return new Polygon(x, y, edges.size());
+        }
+    }
+
+    private static class Edge {
+        public final int x1;
+        public final int y1;
+
+        public final int x2;
+        public final int y2;
+
+        public Edge(int x1, int y1, int x2, int y2) {
+            this.x1 = x1;
+            this.y1 = y1;
+            this.x2 = x2;
+            this.y2 = y2;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (!(obj instanceof Edge)) {
+                return false;
+            }
+            Edge e = (Edge) obj;
+            return (e.x1 == x1 && e.y1 == y1 && e.x2 == x2 && e.y2 == y2) ||
+                    (e.x1 == x2 && e.y1 == y2 && e.x2 == x1 && e.y2 == y1);
+        }
+
+        @Override
+        public int hashCode() {
+            return x1 + y1 + x2 + y2;
+        }
     }
 }
