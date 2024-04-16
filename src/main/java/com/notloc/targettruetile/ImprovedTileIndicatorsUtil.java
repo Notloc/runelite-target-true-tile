@@ -26,14 +26,13 @@
 package com.notloc.targettruetile;
 
 import java.awt.*;
-import java.awt.geom.Line2D;
 import java.util.*;
 import java.util.List;
 
 import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
 
-// Taken from Improved Tile Indicators
+// Adapted from Improved Tile Indicators
 // https://github.com/LeikvollE/tileindicators
 
 // Allows us to display tile indicators beneath actors
