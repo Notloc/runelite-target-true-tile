@@ -76,6 +76,15 @@ public interface TargetTrueTileConfig extends Config
 	)
 	default boolean inheritTaggedNpcs() { return true; }
 
+	@ConfigItem(
+			keyName = "improvedtiles",
+			name = "Use Improved Tile Rendering",
+			description = "Tiles will draw beneath the NPCs and player. Requires GPU.",
+			position = 5,
+			section = options
+	)
+	default boolean improvedTileRendering() { return true; }
+
 	@Alpha
 	@ConfigItem(
 			keyName = "tilecolor",

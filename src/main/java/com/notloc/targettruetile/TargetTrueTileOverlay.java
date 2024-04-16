@@ -13,13 +13,17 @@ import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.overlay.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
+import java.util.List;
 
 class TargetTrueTileOverlay extends Overlay {
     private final Client client;
     private final TargetTrueTilePlugin plugin;
     private final TargetTrueTileConfig config;
+
+    private final List<NPC> renderList = new ArrayList<>();
 
     @Inject
     private TargetTrueTileOverlay(Client client, TargetTrueTilePlugin plugin, TargetTrueTileConfig config) {
@@ -35,20 +39,31 @@ class TargetTrueTileOverlay extends Overlay {
     public Dimension render(Graphics2D graphics) {
         Set<NPC> npcs = plugin.getTargetMemory().getNpcs();
         renderTrueTiles(graphics, npcs);
+        renderList.addAll(npcs);
 
         if (config.highlightOnHover()) {
             NPC mousedNpc = plugin.findNpcUnderMouse();
             if (mousedNpc != null && !npcs.contains(mousedNpc)) {
                 renderTrueTile(graphics, mousedNpc);
+                renderList.add(mousedNpc);
             }
         }
 
         for (NPC npc : plugin.getTaggedNpcs()) {
             if (!npcs.contains(npc)) {
                 renderTrueTile(graphics, npc);
+                renderList.add(npc);
             }
         }
 
+        if (client.isGpu() && config.improvedTileRendering()) {
+            for (NPC npc : renderList) {
+                ImprovedTileIndicatorsUtil.removeActor(client, graphics, npc);
+            }
+            ImprovedTileIndicatorsUtil.removeActor(client, graphics, client.getLocalPlayer());
+        }
+
+        renderList.clear();
         return null;
     }
 
