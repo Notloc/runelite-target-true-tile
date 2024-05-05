@@ -48,6 +48,10 @@ public class ImprovedTileIndicatorsUtil {
                 RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_OFF);
         Model model = actor.getModel();
+        if (model == null) {
+            return;
+        }
+
         int vCount = model.getVerticesCount();
         int[] x3d = model.getVerticesX();
         int[] y3d = model.getVerticesY();
