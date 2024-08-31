@@ -95,6 +95,14 @@ class TargetTrueTileOverlay extends Overlay {
             return null;
         }
 
+        long startTime = System.nanoTime();
+        if (!isNpcStillInWorld(npc)) {
+            return null;
+        }
+        long endTime = System.nanoTime();
+        double duration = (endTime - startTime) / 1000000.0;  //divide by 1000000 to get milliseconds.
+        System.out.println("isNpcStillInWorld: " + duration);
+
         WorldPoint target = npc.getWorldLocation();
         LocalPoint point = LocalPoint.fromWorld(client, target);
         if (point == null) {
@@ -121,5 +129,14 @@ class TargetTrueTileOverlay extends Overlay {
         }
 
         return poly;
+    }
+
+    private static boolean isNpcStillInWorld(NPC npc) {
+        WorldView worldView = npc.getWorldView();
+        if (worldView == null) {
+            return false;
+        }
+        // An ugly check that ensures the NPC is still in the world view
+        return worldView.npcs().getSparse()[npc.getIndex()] != null;
     }
 }
