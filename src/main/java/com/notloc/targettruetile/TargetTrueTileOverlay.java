@@ -128,7 +128,7 @@ class TargetTrueTileOverlay extends Overlay {
                     OverlayUtil.renderPolygon(graphics, poly, borderColor, innerColor, new BasicStroke(borderSize));
                     break;
                 case CORNERS:
-                    Color noBorder = client.isGpu() ? new Color(0, 0, 0, 0) : innerColor; // Non-gpu doesn't support transparent colors
+                    Color noBorder = new Color(0, 0, 0, 0);
                     OverlayUtil.renderPolygon(graphics, poly, noBorder, innerColor, new BasicStroke(borderSize));
                     renderCornersForTile(graphics, poly, borderColor, borderSize);
                     break;
