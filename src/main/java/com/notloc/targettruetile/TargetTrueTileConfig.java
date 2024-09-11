@@ -119,6 +119,24 @@ public interface TargetTrueTileConfig extends Config
 	default int borderSize() { return 2; }
 
 	@ConfigItem(
+			keyName = "borderstyle",
+			name = "Border Style",
+			description = "Style of the tile's border.",
+			position = 3,
+			section = style
+	)
+	default BorderStyle borderStyle() { return BorderStyle.OUTLINE; }
+
+	@ConfigItem(
+			keyName = "borderlength",
+			name = "Border Length",
+			description = "Percentage length of the corner border style. (1 - 100)",
+			position = 4,
+			section = style
+	)
+	default int borderLength() { return 25; }
+
+	@ConfigItem(
 			keyName = "showcorner",
 			name = "Mark Southwest Corner",
 			description = "Mark the southwest corner of a target's tile.",
