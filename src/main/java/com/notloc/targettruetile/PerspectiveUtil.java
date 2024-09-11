@@ -36,7 +36,7 @@ import java.awt.*;
 public class PerspectiveUtil {
 
     public static Polygon getCanvasTileMarkPoly(@Nonnull Client client, @Nonnull LocalPoint localLocation, int size, int length_128) {
-        return getCanvasTileMarkPoly(client, localLocation, size, size, length_128, client.getPlane(), 0);
+        return getCanvasTileMarkPoly(client, localLocation, size, size, length_128, client.getTopLevelWorldView().getPlane(), 0);
     }
 
     // Adapted from runelite-api Perspective.java
@@ -45,7 +45,7 @@ public class PerspectiveUtil {
         int msx = localLocation.getSceneX() + 40;
         int msy = localLocation.getSceneY() + 40;
         if (msx >= 0 && msy >= 0 && msx < 184 && msy < 184) {
-            Scene scene = client.getScene();
+            Scene scene = client.getTopLevelWorldView().getScene();
             byte[][][] tileSettings = scene.getExtendedTileSettings();
             int tilePlane = plane;
             if (plane < 3 && (tileSettings[1][msx][msy] & 2) == 2) {

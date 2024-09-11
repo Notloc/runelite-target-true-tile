@@ -95,8 +95,13 @@ class TargetTrueTileOverlay extends Overlay {
             return null;
         }
 
+        WorldView worldView = client.getTopLevelWorldView();
+        if (worldView == null) {
+            return null;
+        }
+
         WorldPoint target = npc.getWorldLocation();
-        LocalPoint point = LocalPoint.fromWorld(client, target);
+        LocalPoint point = LocalPoint.fromWorld(worldView, target);
         if (point == null) {
             return null;
         }
@@ -104,7 +109,7 @@ class TargetTrueTileOverlay extends Overlay {
         int size = npc.getComposition().getSize();
 
         // 128 units per square, offset position to align larger enemies
-        LocalPoint renderPoint = new LocalPoint(point.getX() + 128*size/2 - 64, point.getY() + 128*size/2 - 64);
+        LocalPoint renderPoint = new LocalPoint(point.getX() + 128*size/2 - 64, point.getY() + 128*size/2 - 64, worldView);
         Polygon poly;
 
         if (config.showCorner() && (!config.showCornerOnlyLarge() || size > 1)) {

@@ -39,6 +39,11 @@ import net.runelite.api.coords.LocalPoint;
 public class ImprovedTileIndicatorsUtil {
 
     public static void removeActorFast(final Client client, final Graphics2D graphics, final Actor actor, final List<Polygon> filter) {
+        WorldView worldView = client.getTopLevelWorldView();
+        if (worldView == null) {
+            return;
+        }
+
         final int clipX1 = client.getViewportXOffset();
         final int clipY1 = client.getViewportYOffset();
         final int clipX2 = client.getViewportWidth() + clipX1;
@@ -76,8 +81,8 @@ public class ImprovedTileIndicatorsUtil {
         final int localY = lp.getY();
         final int northEastX = lp.getX() + Perspective.LOCAL_TILE_SIZE * (size - 1) / 2;
         final int northEastY = lp.getY() + Perspective.LOCAL_TILE_SIZE * (size - 1) / 2;
-        final LocalPoint northEastLp = new LocalPoint(northEastX, northEastY);
-        int localZ = Perspective.getTileHeight(client, northEastLp, client.getPlane());
+        final LocalPoint northEastLp = new LocalPoint(northEastX, northEastY, worldView);
+        int localZ = Perspective.getTileHeight(client, northEastLp, worldView.getPlane());
         int rotation = actor.getCurrentOrientation();
 
         Perspective.modelToCanvas(client, vCount, localX, localY, localZ, rotation, x3d, z3d, y3d, x2d, y2d);
@@ -106,6 +111,7 @@ public class ImprovedTileIndicatorsUtil {
         graphics.setComposite(AlphaComposite.Clear);
         graphics.setColor(Color.WHITE);
 
+        // We do our best to batch the triangles into as few polygons as possible to reduce the number of draw calls
         PolygonBuilder polyBuilder = new PolygonBuilder();
 
         for (int i = 0; i < tCount; i++) {
@@ -166,6 +172,8 @@ public class ImprovedTileIndicatorsUtil {
         return false;
     }
 
+    // Merges triangles into larger polygons to reduce draw calls
+    // Quick and dirty implementation, definitely not optimal, but performance gains are still significant
     private static class PolygonBuilder {
         private final List<PolygonPrototype> polygons = new ArrayList<>();
         private final Map<Edge, PolygonPrototype> polygonsByEdge = new HashMap<>();
@@ -215,9 +223,7 @@ public class ImprovedTileIndicatorsUtil {
         LinkedList<Edge> edges = new LinkedList<>();
 
         public PolygonPrototype(Edge... edges) {
-            for (Edge e : edges) {
-                this.edges.add(e);
-            }
+            this.edges.addAll(Arrays.asList(edges));
         }
 
         public void insertEdgesAt(Edge edgeToReplace, Edge... newEdges) {
