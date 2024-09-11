@@ -5,6 +5,7 @@
 # Features
 * Customizable short-term memory
 * Customizable southwest marking
+* Customizable border style
 * Option to show on mouseover
 * Option to ignore friendly NPCs
 * Option to use NPC Indicator's tags
