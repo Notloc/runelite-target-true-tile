@@ -11,7 +11,6 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
-import net.runelite.client.game.NPCManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.npchighlight.NpcIndicatorsConfig;
@@ -19,10 +18,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.Text;
 import net.runelite.client.util.WildcardMatcher;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @PluginDescriptor(
@@ -38,7 +34,6 @@ public class TargetTrueTilePlugin extends Plugin
 	@Inject private TargetTrueTileConfig config;
 	@Inject private TargetTrueTileOverlay overlay;
 	@Inject private OverlayManager overlayManager;
-	@Inject private NPCManager npcManager;
 	@Inject private ConfigManager configManager;
 	@Inject private ClientThread clientThread;
 
@@ -107,6 +102,7 @@ public class TargetTrueTilePlugin extends Plugin
 	{
 		final NPC npc = npcDespawned.getNpc();
 		taggedNpcs.remove(npc);
+		targetMemory.forgetTarget(npc);
 	}
 
 	@Subscribe
@@ -179,7 +175,7 @@ public class TargetTrueTilePlugin extends Plugin
 	}
 
 	public NPC findNpcUnderMouse() {
-		MenuEntry[] menuEntries = client.getMenuEntries();
+		MenuEntry[] menuEntries = client.getMenu().getMenuEntries();
 		if (menuEntries.length == 0) {
 			return null;
 		}
@@ -213,6 +209,9 @@ public class TargetTrueTilePlugin extends Plugin
 		if (npc == null) {
 			return false;
 		}
-		return !npc.isDead() && (config.highlightFriendlies() || npcManager.getHealth(npc.getId()) != null);
+		if (taggedNpcs.contains(npc)) {
+			return true;
+		}
+		return (config.highlightFriendlies() || npc.getCombatLevel() > 0);
 	}
 }
