@@ -23,7 +23,7 @@ import java.util.*;
 @Slf4j
 @PluginDescriptor(
 	name = "Target True Tile",
-	description = "Dynamically highlights the true tile of enemies during combat. Compatible with NPC Indicator's tags. "
+	description = "Dynamically highlights the true tile of enemies during combat. Compatible with NPC Indicator's tags."
 )
 public class TargetTrueTilePlugin extends Plugin
 {
@@ -219,9 +219,6 @@ public class TargetTrueTilePlugin extends Plugin
 	private boolean isValidTarget(NPC npc) {
 		if (npc == null) {
 			return false;
-		}
-		if (taggedNpcs.contains(npc)) {
-			return true;
 		}
 		return (config.highlightFriendlies() || npc.getCombatLevel() > 0);
 	}
