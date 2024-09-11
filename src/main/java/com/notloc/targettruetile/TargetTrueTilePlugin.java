@@ -220,6 +220,14 @@ public class TargetTrueTilePlugin extends Plugin
 		if (npc == null) {
 			return false;
 		}
-		return (config.highlightFriendlies() || npc.getCombatLevel() > 0);
+		return (config.highlightFriendlies() || isNpcAttackable(npc));
+	}
+
+	private boolean isNpcAttackable(NPC npc) {
+		if (npc == null || npc.getComposition() == null || npc.getComposition().getActions() == null) {
+			return false;
+		}
+		String[] actions = npc.getComposition().getActions();
+		return actions != null && actions.length > 1 && actions[1] != null;
 	}
 }
