@@ -126,8 +126,15 @@ public class TargetTrueTilePlugin extends Plugin
 		if (doTag || "Un-tag".equals(event.getMenuOption())) {
 			int index = event.getId();
 			clientThread.invokeLater(() -> {
-				Optional<NPC> npc = client.getNpcs().stream().filter(n -> n.getIndex() == index).findFirst();
-                npc.ifPresent(n -> toggleIndexTag(n, doTag));
+				WorldView worldView = client.getTopLevelWorldView();
+				if (worldView == null) {
+					return;
+				}
+
+				NPC npc = worldView.npcs().byIndex(index);
+				if (npc != null) {
+					toggleIndexTag(npc, doTag);
+				}
 			});
 		}
 	}
@@ -149,12 +156,16 @@ public class TargetTrueTilePlugin extends Plugin
 		taggedNames = new HashSet<>(Text.fromCSV(npcIndicatorsConfig.getNpcToHighlight()));
 
 		if (client.getGameState() == GameState.LOGGED_IN || client.getGameState() == GameState.LOADING) {
-			List<NPC> npcs = client.getNpcs();
-			for (NPC npc : npcs) {
+			WorldView worldView = client.getTopLevelWorldView();
+			if (worldView == null) {
+				return;
+			}
+
+			worldView.npcs().forEach(npc -> {
 				if (isTaggedNpc(npc)) {
 					taggedNpcs.add(npc);
 				}
-			}
+			});
 		}
 	}
 
