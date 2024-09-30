@@ -33,6 +33,7 @@ public class TargetTrueTilePlugin extends Plugin
 	@Inject private Client client;
 	@Inject private TargetTrueTileConfig config;
 	@Inject private TargetTrueTileOverlay overlay;
+
 	@Inject private OverlayManager overlayManager;
 	@Inject private ConfigManager configManager;
 	@Inject private ClientThread clientThread;
@@ -227,6 +228,7 @@ public class TargetTrueTilePlugin extends Plugin
 		if (npc == null || npc.getComposition() == null || npc.getComposition().getActions() == null) {
 			return false;
 		}
+		// Actions is a sparse array, the second element represents the attack option.
 		String[] actions = npc.getComposition().getActions();
 		return actions != null && actions.length > 1 && actions[1] != null;
 	}

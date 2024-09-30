@@ -33,7 +33,7 @@ class TargetTrueTileOverlay extends Overlay {
         this.config = config;
         setPosition(OverlayPosition.DYNAMIC);
         setLayer(OverlayLayer.ABOVE_SCENE);
-        setPriority(PRIORITY_HIGH);
+        setPriority(0.6f);
     }
 
     @Override
