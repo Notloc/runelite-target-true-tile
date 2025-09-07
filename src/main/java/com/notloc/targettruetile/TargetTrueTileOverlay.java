@@ -65,9 +65,9 @@ class TargetTrueTileOverlay extends Overlay {
 
         if (client.isGpu() && config.improvedTileRendering()) {
             for (NPC npc : renderList) {
-                ImprovedTileIndicatorsUtil.removeActorFast(client, graphics, npc, renderPolyList);
+                ImprovedTileIndicatorsUtil.removeNpcFast(client, graphics, npc, renderPolyList);
             }
-            ImprovedTileIndicatorsUtil.removeActorFast(client, graphics, client.getLocalPlayer(), renderPolyList);
+            ImprovedTileIndicatorsUtil.removePlayerFast(client, graphics, client.getLocalPlayer(), renderPolyList);
         }
 
         renderList.clear();

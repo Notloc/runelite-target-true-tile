@@ -38,7 +38,17 @@ import net.runelite.api.coords.LocalPoint;
 // Allows us to display tile indicators beneath actors
 public class ImprovedTileIndicatorsUtil {
 
-    public static void removeActorFast(final Client client, final Graphics2D graphics, final Actor actor, final List<Polygon> filter) {
+    public static void removePlayerFast(final Client client, final Graphics2D graphics, final Player player, final List<Polygon> filter) {
+        final int localZ = Perspective.getFootprintTileHeight(client, player.getLocalLocation(), client.getTopLevelWorldView().getPlane(), player.getFootprintSize()) - player.getAnimationHeightOffset();
+        removeActorFast(client, graphics, player, localZ, filter);
+    }
+
+    public static void removeNpcFast(final Client client, final Graphics2D graphics, final NPC npc, final List<Polygon> filter) {
+        final int localZ = Perspective.getFootprintTileHeight(client, npc.getLocalLocation(), client.getTopLevelWorldView().getPlane(), npc.getComposition().getFootprintSize()) - npc.getAnimationHeightOffset();
+        removeActorFast(client, graphics, npc, localZ, filter);
+    }
+
+    private static void removeActorFast(final Client client, final Graphics2D graphics, final Actor actor, final int localZ, final List<Polygon> filter) {
         WorldView worldView = client.getTopLevelWorldView();
         if (worldView == null) {
             return;
@@ -65,24 +75,11 @@ public class ImprovedTileIndicatorsUtil {
         int[] x2d = new int[vCount];
         int[] y2d = new int[vCount];
 
-        int size = 1;
-        if (actor instanceof NPC)
-        {
-            NPCComposition composition = ((NPC) actor).getTransformedComposition();
-            if (composition != null)
-            {
-                size = composition.getSize();
-            }
-        }
-
         final LocalPoint lp = actor.getLocalLocation();
 
         final int localX = lp.getX();
         final int localY = lp.getY();
-        final int northEastX = lp.getX() + Perspective.LOCAL_TILE_SIZE * (size - 1) / 2;
-        final int northEastY = lp.getY() + Perspective.LOCAL_TILE_SIZE * (size - 1) / 2;
-        final LocalPoint northEastLp = new LocalPoint(northEastX, northEastY, worldView);
-        int localZ = Perspective.getTileHeight(client, northEastLp, worldView.getPlane());
+
         int rotation = actor.getCurrentOrientation();
 
         Perspective.modelToCanvas(client, vCount, localX, localY, localZ, rotation, x3d, z3d, y3d, x2d, y2d);
