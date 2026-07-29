@@ -38,6 +38,9 @@ class TargetTrueTileOverlay extends Overlay {
 
     @Override
     public Dimension render(Graphics2D graphics) {
+        renderList.clear();
+        renderPolyList.clear();
+
         Set<NPC> npcs = plugin.getTargetMemory().getNpcs();
         renderPolyList.addAll(renderTrueTiles(graphics, npcs));
         renderList.addAll(npcs);
@@ -70,8 +73,6 @@ class TargetTrueTileOverlay extends Overlay {
             ImprovedTileIndicatorsUtil.removePlayerFast(client, graphics, client.getLocalPlayer(), renderPolyList);
         }
 
-        renderList.clear();
-        renderPolyList.clear();
         return null;
     }
 
